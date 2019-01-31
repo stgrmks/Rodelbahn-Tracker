@@ -1,0 +1,51 @@
+version: '3.6'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: rb-tracker__mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=rbtracker
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    restart: always
+    volumes:
+      - ./mongo/entrypoint:/docker-entrypoint-initdb.d
+      - mongodb:/data/db
+      - mongoconfigdb:/data/configdb
+    ports:
+      - 37017:37017
+    networks:
+      - mongonet
+    command: mongod --smallfiles --port 37017
+
+  mongo-express:
+    image: mongo-express
+    container_name: rb-tracker__mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=37017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=rbtracker
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=msteger
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=msteger
+    depends_on:
+      - mongo
+    networks:
+      - mongonet
+
+volumes:
+  mongodb:
+  mongoconfigdb:
+
+networks:
+  mongonet:
+    driver: bridge
+    name: rb-tracker__network
+
+
+
+
