@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -21,8 +23,9 @@ type Config struct {
 	ExtURL           string   `mapstructure:"extURL"`
 	RbList           []string `mapstructure:"RbList"`
 	SlackWebHook     string   `mapstructure:"SlackWebHook"`
+	SlackBotToken    string   `mapstructure:"SlackBotToken"`
 	Notify           bool     `mapstructure:"Notify"`
-	Cron           	 string   `mapstructure:"Cron"`
+	Cron             string   `mapstructure:"Cron"`
 	ActiveSession    *mgo.Session
 	ActiveCollection *mgo.Collection
 }
@@ -65,10 +68,31 @@ var (
 					}
 					log.Printf("%+v\n", config)
 				}
+				viper.WatchConfig()
+				viper.OnConfigChange(func(e fsnotify.Event) {
+					fmt.Println("Config file changed:", e.Name)
+					if err := viper.Unmarshal(&config); err != nil {
+						fmt.Println("Could not load config.")
+					}
+					log.Println(config)
+				})
 			} else {
 				fmt.Println("Config is required!")
 				os.Exit(1)
 			}
+
+			// overwrite slack hooks if set in ENV. for debugging
+			for _, envVarString := range []string{"RBT_SlackWebHook", "RBT_SlackBotToken"} {
+				envVar := os.Getenv(envVarString)
+				if envVar != "" {
+					fieldName := strings.Split(envVarString, "_")[1]
+					rv := reflect.ValueOf(&config).Elem()
+					fv := rv.FieldByName(fieldName)
+					fv.SetString(envVar)
+					log.Printf("Setting %s to %s", fieldName, envVar)
+				}
+			}
+
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
@@ -97,5 +121,6 @@ func init() {
 	RootCmd.AddCommand(crawl)
 	RootCmd.AddCommand(initCrawl)
 	RootCmd.AddCommand(periodicCrawl)
+	RootCmd.AddCommand(bot)
 
 }

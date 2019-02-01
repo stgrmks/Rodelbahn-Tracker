@@ -9,6 +9,7 @@
   "RbList": [
       ],
   "SlackWebHook": "http://mywebhook.slack.com",
+  "SlackBotToken": "your secret token",
   "Notify": true,
   "Cron": "0 0 * * * *"
 }
