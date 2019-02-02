@@ -14,10 +14,10 @@ services:
       - mongodb:/data/db
       - mongoconfigdb:/data/configdb
     ports:
-      - 37017:37017
+      - 27017:27017
     networks:
       - mongonet
-    command: mongod --smallfiles --port 37017
+    command: mongod --smallfiles --port 27017
 
   mongo-express:
     image: mongo-express
@@ -27,7 +27,7 @@ services:
     environment:
       - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
       - ME_CONFIG_MONGODB_SERVER=mongo
-      - ME_CONFIG_MONGODB_PORT=37017
+      - ME_CONFIG_MONGODB_PORT=27017
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
       - ME_CONFIG_MONGODB_AUTH_DATABASE=rbtracker
       - ME_CONFIG_MONGODB_AUTH_USERNAME=msteger
