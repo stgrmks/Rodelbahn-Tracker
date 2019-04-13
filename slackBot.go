@@ -56,18 +56,19 @@ func RunCrawler() CrawlerControl {
 }
 
 func HandlePeriodicCrawl(conv hanu.ConversationInterface) {
-	conv.Reply("Started periodic crawler with cron: %s", &MyConfig.Cron)
+	conv.Reply("Started periodic crawler with cron: %s", MyConfig.Cron)
 
 	// cron setup
 	c := cron.New()
 	c.AddFunc(MyConfig.Cron, func() {
 		_ = RunCrawler()
 	})
-	log.Infof("Periodical Crawl initiated: %s", &MyConfig.Cron)
+	log.Infof("Periodical Crawl initiated: %s", MyConfig.Cron)
 	c.Start()
 
 	// waiting for kill signal
 	<-killPeriodicCrawl
+	log.Info("Stopping Periodical Crawl.")
 }
 
 func HandleChangeCron(conv hanu.ConversationInterface) {
