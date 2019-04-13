@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	VERSION    = "0.2.0"
-	BUILD      = "0.2.0"
-	log        = logrus.New()
-	MainIsDone = make(chan os.Signal, 1)
+	VERSION  = "0.2.0"
+	BUILD    = "0.2.0"
+	log      = logrus.New()
+	killMain = make(chan bool)
 )
 var MyConfig Config
 
@@ -32,9 +32,9 @@ func main() {
 	MyConfig.Load("config.json")
 
 	// start bot
-	StartBot(&MyConfig)
+	go StartBot(&MyConfig)
 
 	// waiting for shutdown signal
-	<-MainIsDone
+	<-killMain
 
 }
