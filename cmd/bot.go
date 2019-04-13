@@ -35,6 +35,7 @@ func RunBot() {
 	slack.Command("version", func(conv hanu.ConversationInterface) {
 		conv.Reply("Version: %s Build: %s", Version, Build)
 	})
+	slack.Command("ls", HandleLS)
 
 	slack.Listen()
 
@@ -83,5 +84,13 @@ func HandleInitCrawl(conv hanu.ConversationInterface) {
 func HandlePeriodicCrawl(conv hanu.ConversationInterface) {
 	go RunPeriodicCrawler()
 	conv.Reply("Started periodic crawler...")
+}
 
+func HandleLS(conv hanu.ConversationInterface) {
+	RunInitDB()
+	result := []string{}
+	if err := config.ActiveCollection.Find(nil).Distinct("location", &result); err != nil {
+		log.Println(err)
+	}
+	fmt.Println(result)
 }
