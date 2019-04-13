@@ -5,6 +5,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -63,7 +64,7 @@ func (c *Config) Load(cfgPath string) {
 		})
 	} else {
 		log.Fatal("Config is required!")
-		MainIsDone <- true
+		signal.Notify(MainIsDone, os.Interrupt)
 	}
 	// overwrite slack hooks if set in ENV. for debugging
 	for _, envVarString := range []string{"RBT_SlackWebHook", "RBT_SlackBotToken"} {

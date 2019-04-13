@@ -57,27 +57,15 @@ func (dbs *DbSession) Disconnect() {
 	log.Info("Disconnected from DB.")
 }
 
-func (d *RbData) Commit(c *mgo.Collection) error {
-	if err := c.Insert(d); err != nil {
-		log.Fatal("Insert failed: ", err)
-		return err
-	} else {
-		log.Info("Insert success: ", d)
-		return nil
-	}
-}
+func (dbs *DbSession) Commit(d []RbData) {
 
-func (dbs *DbSession) Commit(d *RbData) {
-	//	 TODO
-}
+	defer dbs.Session.Close()
 
-func Read(c mgo.Collection, f interface{}) ([]RbData, error) {
-	result := make([]RbData, 0)
-	if err := c.Find(f).All(&result); err != nil {
-		log.Info("Read failed: ", err)
-		return result, err
-	} else {
-		log.Info("Read success.")
-		return result, err
+	for _, tmpData := range d {
+		if err := dbs.Collection.Insert(tmpData); err != nil {
+			log.Debugf("Insert failed: %s", err)
+		} else {
+			log.Debug("Insert success: %s", tmpData)
+		}
 	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"strings"
@@ -20,6 +19,10 @@ type CrawlerControl struct {
 
 func (cc *CrawlerControl) Start(config *Config) {
 
+	defer func() {
+		cc.EndTime = time.Now()
+	}()
+
 	cc.StartTime = time.Now()
 	log.Debugf("Crawl initiated at: %s", cc.StartTime)
 
@@ -29,29 +32,27 @@ func (cc *CrawlerControl) Start(config *Config) {
 	}
 
 	// add wg for each link
-	wg.Add(len(cc.Links))
-	for _, Rb := range cc.Links {
+	wg.Add(len(cc.Links[:2]))
+	for _, Rb := range cc.Links[:2] {
 		go cc.ExtractRbData(Rb)
 	}
 	wg.Wait()
-
+	log.Debug("Crawler Finished")
 }
 
 func (cc *CrawlerControl) ExtractRbLinks(config *Config) {
 
 	res, err := http.Get(config.BaseURL + config.ExtURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Debug(err)
+		return
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
-		fmt.Printf("status code error: %d %s", res.StatusCode, res.Status)
-	}
-
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Debug(err)
+		return
 	}
 
 	doc.Find("a[href]").Each(func(_ int, link *goquery.Selection) {
@@ -68,14 +69,16 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 	defer wg.Done()
 	rbRes, err := http.Get(rbUrl)
 	if err != nil {
-		log.Fatal(err)
+		log.Debug(err)
+		wg.Done()
 	}
 
 	defer rbRes.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(rbRes.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Debug(err)
+		wg.Done()
 	}
 
 	location := strings.TrimSpace(doc.Find("h1").First().Text())
@@ -85,7 +88,7 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 
 		// iterate over entries
 		table.Find("tr").Each(func(entryIdx int, tr *goquery.Selection) {
-			rbEntry := RbData{}
+			rbEntry := new(RbData)
 
 			// iterate over single cells
 			tr.Find("td").EachWithBreak(func(dataIdx int, td *goquery.Selection) bool {
@@ -96,7 +99,8 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 				case dataIdx == 0:
 					rbEntry.Time, err = time.Parse("2006-01-02", tdValue)
 					if err != nil {
-						log.Fatal("Could not Parse Date!", tdValue)
+						log.Debug("Could not Parse Date!", tdValue)
+						wg.Done()
 					}
 				case dataIdx == 1:
 					rbEntry.User = tdValue
@@ -117,9 +121,10 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 			if rbEntry.Rating != "" {
 				rbEntry.Link = rbUrl
 				rbEntry.Location = location
-				cc.Result = append(cc.Result, rbEntry)
+				cc.Result = append(cc.Result, *rbEntry)
+				log.Debugf("Found rating: %s", rbEntry)
 			} else {
-				log.Info("No Rating!")
+				log.Debug("No Rating!")
 			}
 
 		})

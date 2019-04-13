@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/sbstjn/hanu"
+	"os"
+	"os/signal"
 )
 
 func StartBot(c *Config) {
@@ -16,7 +18,7 @@ func StartBot(c *Config) {
 	})
 	slack.Command("kill", func(conv hanu.ConversationInterface) {
 		conv.Reply("bye bye")
-		MainIsDone <- true
+		signal.Notify(MainIsDone, os.Interrupt)
 	})
 
 	slack.Command("testDB", HandleCrawlNow)
@@ -37,5 +39,7 @@ func HandleCrawlNow(conv hanu.ConversationInterface) {
 	ActiveCrawler.Start(&MyConfig)
 
 	// Insert crawler result to DB
+	ActiveDbSession.Commit(ActiveCrawler.Result)
+	conv.Reply("Crawler finished after %s", ActiveCrawler.EndTime.Sub(ActiveCrawler.StartTime).String())
 
 }

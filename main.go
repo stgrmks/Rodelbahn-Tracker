@@ -9,7 +9,7 @@ var (
 	VERSION    = "0.2.0"
 	BUILD      = "0.2.0"
 	log        = logrus.New()
-	MainIsDone = make(chan bool)
+	MainIsDone = make(chan os.Signal, 1)
 )
 var MyConfig Config
 
@@ -29,7 +29,6 @@ func init() {
 func main() {
 
 	// init stuff
-
 	MyConfig.Load("config.json")
 
 	// start bot
