@@ -34,5 +34,8 @@ func HandleCrawlNow(conv hanu.ConversationInterface) {
 	// Start Crawler
 	ActiveCrawler := CrawlerControl{}
 	ActiveCrawler.Links = MyConfig.RbList
+	ActiveCrawler.Start(&MyConfig)
+
+	// Insert crawler result to DB
 
 }

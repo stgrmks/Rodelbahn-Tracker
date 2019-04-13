@@ -67,6 +67,10 @@ func (d *RbData) Commit(c *mgo.Collection) error {
 	}
 }
 
+func (dbs *DbSession) Commit(d *RbData) {
+	//	 TODO
+}
+
 func Read(c mgo.Collection, f interface{}) ([]RbData, error) {
 	result := make([]RbData, 0)
 	if err := c.Find(f).All(&result); err != nil {

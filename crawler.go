@@ -15,7 +15,7 @@ type CrawlerControl struct {
 	StartTime time.Time
 	EndTime   time.Time
 	Links     []string
-	Data      []RbData
+	Result    []RbData
 }
 
 func (cc *CrawlerControl) Start(config *Config) {
@@ -23,13 +23,15 @@ func (cc *CrawlerControl) Start(config *Config) {
 	cc.StartTime = time.Now()
 	log.Debugf("Crawl initiated at: %s", cc.StartTime)
 
+	// Get RB Links if there are none
 	if len(cc.Links) < 1 {
 		cc.ExtractRbLinks(config)
 	}
 
-	wg.Add(len(MyConfig.RbList))
-	for _, Rb := range MyConfig.RbList {
-		go ExtractRbData(Rb)
+	// add wg for each link
+	wg.Add(len(cc.Links))
+	for _, Rb := range cc.Links {
+		go cc.ExtractRbData(Rb)
 	}
 	wg.Wait()
 
@@ -61,7 +63,7 @@ func (cc *CrawlerControl) ExtractRbLinks(config *Config) {
 	})
 }
 
-func ExtractRbData(rbUrl string) {
+func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 
 	defer wg.Done()
 	rbRes, err := http.Get(rbUrl)
@@ -83,7 +85,7 @@ func ExtractRbData(rbUrl string) {
 
 		// iterate over entries
 		table.Find("tr").Each(func(entryIdx int, tr *goquery.Selection) {
-			rbEntry := &RbData{}
+			rbEntry := RbData{}
 
 			// iterate over single cells
 			tr.Find("td").EachWithBreak(func(dataIdx int, td *goquery.Selection) bool {
@@ -115,11 +117,7 @@ func ExtractRbData(rbUrl string) {
 			if rbEntry.Rating != "" {
 				rbEntry.Link = rbUrl
 				rbEntry.Location = location
-				if err := rbEntry.Commit(ActiveDbSession.Collection); err == nil {
-					if MyConfig.Notify == true {
-						//SlackNotifier(rbEntry)
-					}
-				}
+				cc.Result = append(cc.Result, rbEntry)
 			} else {
 				log.Info("No Rating!")
 			}
