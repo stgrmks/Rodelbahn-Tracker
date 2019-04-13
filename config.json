@@ -6,10 +6,10 @@
   "collection": "rbtracker",
   "baseURL": "https://www.rodelfuehrer.de",
   "extURL": "/rodelbahnen-alpen",
-  "RbList": [
+  "rbList": [
       ],
-  "SlackWebHook": "http://mywebhook.slack.com",
-  "SlackBotToken": "your secret token",
-  "Notify": true,
-  "Cron": "0 0 * * * *"
+  "slackWebHook": "http://mywebhook.slack.com",
+  "slackBotToken": "your secret token",
+  "notify": true,
+  "cron": "0 0 * * * *"
 }
