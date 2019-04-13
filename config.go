@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"gopkg.in/mgo.v2"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,20 +11,18 @@ import (
 )
 
 type Config struct {
-	Host             string   `mapstructure:"host"`
-	Database         string   `mapstructure:"database"`
-	User             string   `mapstructure:"user"`
-	Password         string   `mapstructure:"password"`
-	Collection       string   `mapstructure:"collection"`
-	BaseURL          string   `mapstructure:"baseURL"`
-	ExtURL           string   `mapstructure:"extURL"`
-	RbList           []string `mapstructure:"RbList"`
-	SlackWebHook     string   `mapstructure:"SlackWebHook"`
-	SlackBotToken    string   `mapstructure:"SlackBotToken"`
-	Notify           bool     `mapstructure:"Notify"`
-	Cron             string   `mapstructure:"Cron"`
-	ActiveSession    *mgo.Session
-	ActiveCollection *mgo.Collection
+	Host          string   `mapstructure:"host"`
+	Database      string   `mapstructure:"database"`
+	User          string   `mapstructure:"user"`
+	Password      string   `mapstructure:"password"`
+	Collection    string   `mapstructure:"collection"`
+	BaseURL       string   `mapstructure:"baseURL"`
+	ExtURL        string   `mapstructure:"extURL"`
+	RbList        []string `mapstructure:"RbList"`
+	SlackWebHook  string   `mapstructure:"SlackWebHook"`
+	SlackBotToken string   `mapstructure:"SlackBotToken"`
+	Notify        bool     `mapstructure:"Notify"`
+	Cron          string   `mapstructure:"Cron"`
 }
 
 func (c *Config) Load(cfgPath string) {
@@ -66,7 +63,7 @@ func (c *Config) Load(cfgPath string) {
 		})
 	} else {
 		log.Fatal("Config is required!")
-		mainFinished <- true
+		MainIsDone <- true
 	}
 	// overwrite slack hooks if set in ENV. for debugging
 	for _, envVarString := range []string{"RBT_SlackWebHook", "RBT_SlackBotToken"} {

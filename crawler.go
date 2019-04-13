@@ -3,10 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/robfig/cron"
 	"net/http"
-	"os"
-	"os/signal"
 	"strings"
 	"sync"
 	"time"
@@ -14,24 +11,20 @@ import (
 
 var wg sync.WaitGroup
 
-func RunPeriodicCrawler() {
-	c := cron.New()
-	c.AddFunc(MyConfig.Cron, RunStartCrawler)
-	fmt.Printf("Periodical Crawl initiated: %s\n", MyConfig.Cron)
-	c.Start()
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, os.Kill)
-	<-sig
+type CrawlerControl struct {
+	StartTime time.Time
+	EndTime   time.Time
+	Links     []string
+	Data      []RbData
 }
 
-func RunStartCrawler() {
+func (cc *CrawlerControl) Start(config *Config) {
 
-	//RunInitDB()
+	cc.StartTime = time.Now()
+	log.Debugf("Crawl initiated at: %s", cc.StartTime)
 
-	fmt.Printf("Crawl initiated at: %s\n", time.Now().String())
-
-	if len(MyConfig.RbList) == 0 {
-		ExtractRbLinks()
+	if len(cc.Links) < 1 {
+		cc.ExtractRbLinks(config)
 	}
 
 	wg.Add(len(MyConfig.RbList))
@@ -42,9 +35,9 @@ func RunStartCrawler() {
 
 }
 
-func ExtractRbLinks() {
+func (cc *CrawlerControl) ExtractRbLinks(config *Config) {
 
-	res, err := http.Get(MyConfig.BaseURL + MyConfig.ExtURL)
+	res, err := http.Get(config.BaseURL + config.ExtURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,8 +55,8 @@ func ExtractRbLinks() {
 	doc.Find("a[href]").Each(func(_ int, link *goquery.Selection) {
 		href, _ := link.Attr("href")
 		if relDoc := strings.Contains(href, "/rodelbahnen-alpen/rodeltour/"); relDoc {
-			newLink := MyConfig.BaseURL + href
-			MyConfig.RbList = append(MyConfig.RbList, newLink)
+			newLink := config.BaseURL + href
+			cc.Links = append(cc.Links, newLink)
 		}
 	})
 }
@@ -122,7 +115,7 @@ func ExtractRbData(rbUrl string) {
 			if rbEntry.Rating != "" {
 				rbEntry.Link = rbUrl
 				rbEntry.Location = location
-				if err := rbEntry.Commit(MyConfig.ActiveCollection); err == nil {
+				if err := rbEntry.Commit(ActiveDbSession.Collection); err == nil {
 					if MyConfig.Notify == true {
 						//SlackNotifier(rbEntry)
 					}

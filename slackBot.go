@@ -16,8 +16,23 @@ func StartBot(c *Config) {
 	})
 	slack.Command("kill", func(conv hanu.ConversationInterface) {
 		conv.Reply("bye bye")
-		mainFinished <- true
+		MainIsDone <- true
 	})
 
+	slack.Command("testDB", HandleCrawlNow)
+
 	slack.Listen()
+}
+
+func HandleCrawlNow(conv hanu.ConversationInterface) {
+	conv.Reply("Executing Crawler now...")
+
+	// Establish DB connection
+	ActiveDbSession := DbSession{}
+	ActiveDbSession.Connect(&MyConfig)
+
+	// Start Crawler
+	ActiveCrawler := CrawlerControl{}
+	ActiveCrawler.Links = MyConfig.RbList
+
 }
