@@ -5,6 +5,7 @@ import (
 	"github.com/sbstjn/hanu"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
+	"reflect"
 )
 
 var (
@@ -29,8 +30,9 @@ func StartBot() {
 		conv.Reply("bye bye")
 		KillBot <- true
 	})
+	slack.Command("showConfig", HandleShowConfig)
 	slack.Command("crawlNow", HandleCrawlNow)
-	slack.Command("periodicCrawl", HandlePeriodicCrawl)
+	slack.Command("startPeriodicCrawl", HandlePeriodicCrawl)
 	slack.Command("stopPeriodicCrawl", func(conv hanu.ConversationInterface) {
 		conv.Reply("Stopping Periodic Crawl")
 		KillPeriodicCrawl <- true
@@ -38,6 +40,15 @@ func StartBot() {
 	slack.Command("changeCron <Cron-Pattern>", HandleChangeCron)
 
 	slack.Listen()
+}
+
+func HandleShowConfig(conv hanu.ConversationInterface) {
+	key := reflect.TypeOf(MyConfig)
+	value := reflect.ValueOf(MyConfig)
+
+	for i := 0; i < value.NumField(); i++ {
+		conv.Reply("%s : %s", key.Field(i).Name, value.Field(i))
+	}
 }
 
 func HandleCrawlNow(conv hanu.ConversationInterface) {
@@ -78,5 +89,8 @@ func HandlePeriodicCrawl(conv hanu.ConversationInterface) {
 }
 
 func HandleChangeCron(conv hanu.ConversationInterface) {
-	conv.Reply("TO BE IMPLEMENTED!")
+	newCron, _ := conv.String("Cron-Pattern")
+	MyConfig.Cron = newCron
+	logger.Logger.Infof("Changing Cron-Pattern to: %s", MyConfig.Cron)
+	conv.Reply("Changing Cron-Pattern to: `%s`", MyConfig.Cron)
 }
