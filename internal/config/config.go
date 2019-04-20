@@ -1,9 +1,10 @@
-package main
+package config
 
 import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -45,25 +46,24 @@ func (c *Config) Load(cfgPath string) {
 
 		// Find and read the c file; Handle errors reading the c file
 		if err := viper.ReadInConfig(); err != nil {
-			log.Infof("Failed to read c file: ", err.Error())
+			logger.Logger.Infof("Failed to read c file: ", err.Error())
 			os.Exit(1)
 		} else {
-			log.Infof("Using Config: %s", viper.ConfigFileUsed())
+			logger.Logger.Infof("Using Config: %s", viper.ConfigFileUsed())
 			if err := viper.Unmarshal(c); err != nil {
-				log.Info("Could not load config!")
+				logger.Logger.Info("Could not load config!")
 			}
-			log.Debugf("Config: %s", c)
+			logger.Logger.Debugf("Config: %s", c)
 		}
 		viper.WatchConfig()
 		viper.OnConfigChange(func(e fsnotify.Event) {
-			log.Infof("Config file changed:", e.Name)
+			logger.Logger.Infof("Config file changed:", e.Name)
 			if err := viper.Unmarshal(c); err != nil {
-				log.Warn("Could not load config!")
+				logger.Logger.Warn("Could not load config!")
 			}
 		})
 	} else {
-		log.Fatal("Config is required!")
-		killMain <- true
+		logger.Logger.Fatal("Config is required!")
 	}
 	// overwrite slack hooks if set in ENV. for debugging
 	for _, envVarString := range []string{"RBT_SlackWebHook", "RBT_SlackBotToken"} {
@@ -73,7 +73,7 @@ func (c *Config) Load(cfgPath string) {
 			rv := reflect.ValueOf(c).Elem()
 			fv := rv.FieldByName(fieldName)
 			fv.SetString(envVar)
-			log.Infof("Setting %s to %s", fieldName, envVar)
+			logger.Logger.Infof("Setting %s to %s", fieldName, envVar)
 		}
 	}
 

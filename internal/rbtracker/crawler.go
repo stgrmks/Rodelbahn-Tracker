@@ -1,7 +1,9 @@
-package main
+package rbtracker
 
 import (
 	"github.com/PuerkitoBio/goquery"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,14 +19,14 @@ type CrawlerControl struct {
 	Result    []RbData
 }
 
-func (cc *CrawlerControl) Start(config *Config) {
+func (cc *CrawlerControl) Start(config *config.Config) {
 
 	defer func() {
 		cc.EndTime = time.Now()
 	}()
 
 	cc.StartTime = time.Now()
-	log.Debugf("Crawl initiated at: %s", cc.StartTime)
+	logger.Logger.Debugf("Crawl initiated at: %s", cc.StartTime)
 
 	// Get RB Links if there are none
 	if len(cc.Links) < 1 {
@@ -37,21 +39,21 @@ func (cc *CrawlerControl) Start(config *Config) {
 		go cc.ExtractRbData(Rb)
 	}
 	wg.Wait()
-	log.Debug("Crawler Finished")
+	logger.Logger.Debug("Crawler Finished")
 }
 
-func (cc *CrawlerControl) ExtractRbLinks(config *Config) {
+func (cc *CrawlerControl) ExtractRbLinks(config *config.Config) {
 
 	res, err := http.Get(config.BaseURL + config.ExtURL)
 	if err != nil {
-		log.Debug(err)
+		logger.Logger.Debug(err)
 		return
 	}
 	defer res.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Debug(err)
+		logger.Logger.Debug(err)
 		return
 	}
 
@@ -69,7 +71,7 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 	defer wg.Done()
 	rbRes, err := http.Get(rbUrl)
 	if err != nil {
-		log.Debug(err)
+		logger.Logger.Debug(err)
 		wg.Done()
 	}
 
@@ -77,7 +79,7 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 
 	doc, err := goquery.NewDocumentFromReader(rbRes.Body)
 	if err != nil {
-		log.Debug(err)
+		logger.Logger.Debug(err)
 		wg.Done()
 	}
 
@@ -99,7 +101,7 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 				case dataIdx == 0:
 					rbEntry.Time, err = time.Parse("2006-01-02", tdValue)
 					if err != nil {
-						log.Debug("Could not Parse Date!", tdValue)
+						logger.Logger.Debug("Could not Parse Date!", tdValue)
 						wg.Done()
 					}
 				case dataIdx == 1:
@@ -122,9 +124,9 @@ func (cc *CrawlerControl) ExtractRbData(rbUrl string) {
 				rbEntry.Link = rbUrl
 				rbEntry.Location = location
 				cc.Result = append(cc.Result, *rbEntry)
-				log.Debugf("Found rating: %s", rbEntry)
+				logger.Logger.Debugf("Found rating: %s", rbEntry)
 			} else {
-				log.Debug("No Rating!")
+				logger.Logger.Debug("No Rating!")
 			}
 
 		})

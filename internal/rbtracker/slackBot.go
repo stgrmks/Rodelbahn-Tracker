@@ -1,19 +1,25 @@
-package main
+package rbtracker
 
 import (
 	"github.com/robfig/cron"
 	"github.com/sbstjn/hanu"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 )
 
 var (
-	killPeriodicCrawl = make(chan bool)
+	VERSION           = "0.2.0"
+	BUILD             = "0.2.0"
+	KillBot           = make(chan bool)
+	KillPeriodicCrawl = make(chan bool)
+	MyConfig          config.Config
 )
 
-func StartBot(c *Config) {
+func StartBot() {
 
-	slack, err := hanu.New(c.SlackBotToken)
+	slack, err := hanu.New(MyConfig.SlackBotToken)
 	if err != nil {
-		log.Fatal(err)
+		logger.Logger.Fatal(err)
 	}
 
 	slack.Command("version", func(conv hanu.ConversationInterface) {
@@ -21,13 +27,13 @@ func StartBot(c *Config) {
 	})
 	slack.Command("kill", func(conv hanu.ConversationInterface) {
 		conv.Reply("bye bye")
-		killMain <- true
+		KillBot <- true
 	})
 	slack.Command("crawlNow", HandleCrawlNow)
 	slack.Command("periodicCrawl", HandlePeriodicCrawl)
 	slack.Command("stopPeriodicCrawl", func(conv hanu.ConversationInterface) {
 		conv.Reply("Stopping Periodic Crawl")
-		killPeriodicCrawl <- true
+		KillPeriodicCrawl <- true
 	})
 	slack.Command("changeCron <Cron-Pattern>", HandleChangeCron)
 
@@ -63,12 +69,12 @@ func HandlePeriodicCrawl(conv hanu.ConversationInterface) {
 	c.AddFunc(MyConfig.Cron, func() {
 		_ = RunCrawler()
 	})
-	log.Infof("Periodical Crawl initiated: %s", MyConfig.Cron)
+	logger.Logger.Infof("Periodical Crawl initiated: %s", MyConfig.Cron)
 	c.Start()
 
 	// waiting for kill signal
-	<-killPeriodicCrawl
-	log.Info("Stopping Periodical Crawl.")
+	<-KillPeriodicCrawl
+	logger.Logger.Info("Stopping Periodical Crawl.")
 }
 
 func HandleChangeCron(conv hanu.ConversationInterface) {
