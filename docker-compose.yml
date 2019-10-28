@@ -16,8 +16,8 @@ services:
     ports:
       - 27017:27017
     networks:
-      - mongonet
-    command: mongod --smallfiles --port 27017
+      - rb-tracker__network
+    command: mongod --port 27017
 
   mongo-express:
     image: mongo-express
@@ -30,19 +30,19 @@ services:
       - ME_CONFIG_MONGODB_PORT=27017
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
       - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
-      - ME_CONFIG_MONGODB_AUTH_USERNAME=msteger
-      - ME_CONFIG_MONGODB_AUTH_PASSWORD=msteger
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=user
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
     depends_on:
       - mongo
     networks:
-      - mongonet
+      - rb-tracker__network
 
 volumes:
   mongodb:
   mongoconfigdb:
 
 networks:
-  mongonet:
+  rb-tracker__network:
     driver: bridge
     name: rb-tracker__network
 
