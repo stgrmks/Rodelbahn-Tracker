@@ -9,8 +9,11 @@ var Logger = logrus.New()
 
 func init() {
 
-	// Log as JSON instead of the default ASCII formatter.
-	Logger.SetFormatter(&logrus.JSONFormatter{})
+	Logger.SetFormatter(&logrus.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+		ForceColors:   true,
+	})
 
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example

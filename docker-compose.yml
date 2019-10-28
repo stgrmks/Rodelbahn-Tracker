@@ -5,7 +5,7 @@ services:
     image: mongo:latest
     container_name: rb-tracker__mongodb
     environment:
-      - MONGO_INITDB_DATABASE=app
+      - MONGO_INITDB_DATABASE=rb-tracker
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin
     restart: always
@@ -29,7 +29,7 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongo
       - ME_CONFIG_MONGODB_PORT=27017
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-      - ME_CONFIG_MONGODB_AUTH_DATABASE=app
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
       - ME_CONFIG_MONGODB_AUTH_USERNAME=msteger
       - ME_CONFIG_MONGODB_AUTH_PASSWORD=msteger
     depends_on:
