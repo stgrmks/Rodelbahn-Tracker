@@ -1,14 +1,13 @@
 {
   "host": "localhost",
-  "database": "rbtracker",
-  "user": "msteger",
-  "password": "msteger",
-  "collection": "rbtracker",
+  "database": "rb-tracker",
+  "user": "user",
+  "password": "user",
+  "collection": "rb-tracker",
   "baseURL": "https://www.rodelfuehrer.de",
   "extURL": "/rodelbahnen-alpen",
   "rbList": [
       ],
-  "slackWebHook": "http://mywebhook.slack.com",
   "slackBotToken": "your secret token",
   "notify": true,
   "cron": "0 0 * * * *"
