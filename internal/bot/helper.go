@@ -2,7 +2,6 @@ package bot
 
 import (
 	"errors"
-	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"strings"
 )
@@ -17,14 +16,6 @@ const (
 	Smaller      = "SMALLER"
 	SmallerEqual = "SMALLEREQUAL"
 	All          = "ALL"
-)
-
-var (
-	VERSION           = "0.2.0"
-	BUILD             = "0.2.0"
-	KillBot           = make(chan bool)
-	KillPeriodicCrawl = make(chan bool)
-	MyConfig          config.Config
 )
 
 func msgSplit(cmdIsToSplits string, splits int, msg string, substr string) ([]string, error) {

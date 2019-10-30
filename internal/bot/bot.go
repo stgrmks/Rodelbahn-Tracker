@@ -3,7 +3,22 @@ package bot
 import (
 	"fmt"
 	"github.com/nlopes/slack"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
 	"strings"
+)
+
+const (
+	Version  = "VERSION"
+	CrawlNow = "CRAWLNOW"
+)
+
+var (
+	VERSION           = "0.2.0"
+	BUILD             = "0.2.0"
+	KillBot           = make(chan bool)
+	KillPeriodicCrawl = make(chan bool)
+	MyConfig          config.Config
 )
 
 func StartBot() {
@@ -62,12 +77,25 @@ func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM) {
 		returnMsg = fmt.Sprintf("Sorry <@%s>, %s :(", userId, err.Error())
 		rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
 	}
-	cmd := cmdSplit[1]
+	cmd := strings.ToUpper(cmdSplit[1])
+	fmt.Println(cmd)
 	switch cmd {
-	case "version":
+	case Version:
 		log.Print("Sending Version and Build Info")
 		returnMsg = fmt.Sprintf("<@%s> Version: %s Build: %s", userId, VERSION, BUILD)
 		rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
+		break
+
+	case CrawlNow:
+		dbSess := crawler.DbSession{}
+		dbSess.Connect(&MyConfig)
+		crwl := crawler.Control{}
+		crwl.Links = MyConfig.RbList
+		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Started Crawler...", userId), chanId))
+		crwl.Start(&MyConfig)
+		dbSess.Commit(crwl.Result)
+		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Crawler finished :)", userId), chanId))
+
 	}
 
 	log.Println("command: ", msg, " cmdSplit: ", cmdSplit)
