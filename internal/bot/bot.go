@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
@@ -9,6 +10,16 @@ import (
 )
 
 var log = logger.Logger.WithField("package", "bot")
+
+const (
+	Equal        = "EQUAL"
+	Inequal      = "INEQUAL"
+	Bigger       = "BIGGER"
+	BiggerEqual  = "BIGGEREQUAL"
+	Smaller      = "SMALLER"
+	SmallerEqual = "SMALLEREQUAL"
+	All          = "ALL"
+)
 
 var (
 	VERSION           = "0.2.0"
@@ -35,18 +46,21 @@ func StartBot() {
 		case *slack.MessageEvent:
 			botId := rtm.GetInfo().User.ID
 			userId := ev.User
-
 			msg := ev.Text
-			botIdentifierInMsg := fmt.Sprintf("<@%s>", botId)
+			botTagInMsg := fmt.Sprintf("<@%s>", botId)
 
-			if (botId == userId) || (!strings.Contains(msg, botIdentifierInMsg)) {
+			if (botId == userId) || (!strings.Contains(msg, botTagInMsg)) {
 				log.Debugln("Msg from bot or bot was not addressed directly")
 				continue
 			}
-
-			log.Debugln("botId: ", botId, "userId: ", userId, " Message: ", msg, " BotIdentifierInMsg: ", botIdentifierInMsg)
-
-			rtm.SendMessage(rtm.NewOutgoingMessage("IT'S BURNTTTT!", ev.Channel))
+			log.Debugln("botId: ", botId, "userId: ", userId, " Message: ", msg, " BotIdentifierInMsg: ", botTagInMsg)
+			chanId := ev.Channel
+			cmdSplit, err := msgSplit(Equal, 2, msg, botTagInMsg)
+			if err != nil {
+				returnMsg := fmt.Sprintf("Sorry <@%s>, %s :(", userId, err.Error())
+				rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
+			}
+			commandHandler(userId, chanId, cmdSplit[1], rtm)
 
 		case *slack.PresenceChangeEvent:
 			log.Debugf("Presence Change: %v\n", ev)
@@ -62,4 +76,56 @@ func StartBot() {
 		}
 	}
 
+}
+
+func msgSplit(cmdIsToSplits string, splits int, msg string, substr string) ([]string, error) {
+	cmdRaw := strings.Split(msg, substr)
+	cmpResult := false
+	switch cmdIsToSplits {
+
+	case Equal:
+		cmpResult = len(cmdRaw) == splits
+		break
+
+	case Inequal:
+		cmpResult = len(cmdRaw) != splits
+		break
+
+	case Bigger:
+		cmpResult = len(cmdRaw) > splits
+		break
+
+	case BiggerEqual:
+		cmpResult = len(cmdRaw) >= splits
+		break
+
+	case Smaller:
+		cmpResult = len(cmdRaw) < splits
+		break
+
+	case SmallerEqual:
+		cmpResult = len(cmdRaw) <= splits
+		break
+
+	case All:
+		cmpResult = true
+		break
+	}
+
+	if !cmpResult {
+		err := errors.New("unknown command")
+		log.Errorln("Comparison: ", cmpResult, "CommandRaw Len: ", len(cmdRaw), " Splits: ", splits, " CommandRaw: ", cmdRaw, " Error: ", err)
+		return cmdRaw, err
+	}
+	return cmdRaw, nil
+}
+
+func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM) {
+	cmdSplit, err := msgSplit(Bigger, 0, msg, " ")
+	if err != nil {
+		returnMsg := fmt.Sprintf("Sorry <@%s>, %s :(", userId, err.Error())
+		rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
+	}
+
+	log.Println("command: ", msg, " cmdSplit: ", cmdSplit)
 }
