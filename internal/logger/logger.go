@@ -20,5 +20,5 @@ func init() {
 	Logger.SetOutput(os.Stdout)
 
 	// Only Logger the warning severity or above.
-	Logger.SetLevel(logrus.DebugLevel)
+	Logger.SetLevel(logrus.InfoLevel)
 }
