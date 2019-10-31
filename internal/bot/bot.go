@@ -3,16 +3,19 @@ package bot
 import (
 	"fmt"
 	"github.com/nlopes/slack"
+	"github.com/robfig/cron"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
+	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"reflect"
 	"strings"
 )
 
 const (
-	Version    = "VERSION"
-	CrawlNow   = "CRAWLNOW"
-	ShowConfig = "SHOWCONFIG"
+	Version       = "VERSION"
+	CrawlNow      = "CRAWLNOW"
+	ShowConfig    = "SHOWCONFIG"
+	PeriodicCrawl = "PERIODICCRAWL"
 )
 
 var (
@@ -99,18 +102,43 @@ func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM, ap
 		break
 
 	case CrawlNow:
-		//var rtnStr string
-		//api := slack.New(MyConfig.SlackBotToken, slack.OptionDebug(true))
+		startCrawler(rtm, userId, chanId, api)
+		break
 
-		var attachment slack.Attachment
-		dbSess := crawler.DbSession{}
-		dbSess.Connect(&MyConfig)
-		crwl := crawler.Control{}
-		crwl.Links = MyConfig.RbList
-		crwl.Start(&MyConfig)
-		newEntries := dbSess.Commit(crwl.Result)
-		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Crawler finished successfully in %s with %d new entries!", userId, crwl.EndTime.Sub(crwl.StartTime), len(newEntries)), chanId))
+	case PeriodicCrawl:
+		// cron setup
+		c := cron.New()
+		err := c.AddFunc(MyConfig.Cron, func() {
+			startCrawler(rtm, userId, chanId, api)
+		})
+		if err != nil {
+			log.Errorln("Failed to add Crawl function to cron service", err)
+			return
+		}
+		c.Start()
+		log.Debug("Started cron service.")
+		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Starting Periodic Crawl with Cron: %s", userId, MyConfig.Cron), chanId))
 
+		// waiting for kill signal
+		<-KillPeriodicCrawl
+		logger.Logger.Info("Stopping Periodical Crawl.")
+		break
+
+	}
+
+	log.Println("command: ", msg, " cmdSplit: ", cmdSplit)
+}
+
+func startCrawler(rtm *slack.RTM, userId string, chanId string, api *slack.Client) {
+	var attachment slack.Attachment
+	dbSess := crawler.DbSession{}
+	dbSess.Connect(&MyConfig)
+	crwl := crawler.Control{}
+	crwl.Links = MyConfig.RbList
+	crwl.Start(&MyConfig)
+	newEntries := dbSess.Commit(crwl.Result)
+	rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Crawler finished successfully in %s with %d new entries!", userId, crwl.EndTime.Sub(crwl.StartTime), len(newEntries)), chanId))
+	if MyConfig.Notify {
 		for _, entry := range newEntries {
 			preText := fmt.Sprintf("New Rating for %s!", entry.Location)
 			text := fmt.Sprintf("Timestamp: %s\nUser: %s\nRating: %s\nComment: %s", entry.Time.Format("2006-01-02"), entry.User, entry.Rating, entry.Comment)
@@ -124,13 +152,8 @@ func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM, ap
 			channelID, timestamp, err := api.PostMessage(chanId, slack.MsgOptionText(fmt.Sprintf("<@%s>", userId), false), slack.MsgOptionAttachments(attachment))
 			if err != nil {
 				log.Errorf("%s\n", err)
-				return
 			}
 			log.Debugf("Message successfully sent to channel %s at %s", channelID, timestamp)
 		}
-		break
-
 	}
-
-	log.Println("command: ", msg, " cmdSplit: ", cmdSplit)
 }
