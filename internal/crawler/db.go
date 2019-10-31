@@ -58,15 +58,18 @@ func (dbs *DbSession) Disconnect() {
 	log.Info("Disconnected from DB.")
 }
 
-func (dbs *DbSession) Commit(d []RbData) {
+func (dbs *DbSession) Commit(d []RbData) []RbData {
 
 	defer dbs.Session.Close()
+	var newEntries []RbData
 
 	for _, tmpData := range d {
 		if err := dbs.Collection.Insert(tmpData); err != nil {
 			log.Debugf("Insert failed: %s", err)
 		} else {
 			log.Debug("Insert success: %s", tmpData)
+			newEntries = append(newEntries, tmpData)
 		}
 	}
+	return newEntries
 }

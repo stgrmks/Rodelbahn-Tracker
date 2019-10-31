@@ -36,8 +36,8 @@ func (cc *Control) Start(config *config.Config) {
 	}
 
 	// add wg for each link
-	wg.Add(len(cc.Links[:2]))
-	for _, Rb := range cc.Links[:2] {
+	wg.Add(len(cc.Links))
+	for _, Rb := range cc.Links {
 		go cc.ExtractRbData(Rb)
 	}
 	wg.Wait()

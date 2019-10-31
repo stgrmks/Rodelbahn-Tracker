@@ -5,12 +5,14 @@ import (
 	"github.com/nlopes/slack"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
+	"reflect"
 	"strings"
 )
 
 const (
-	Version  = "VERSION"
-	CrawlNow = "CRAWLNOW"
+	Version    = "VERSION"
+	CrawlNow   = "CRAWLNOW"
+	ShowConfig = "SHOWCONFIG"
 )
 
 var (
@@ -52,7 +54,7 @@ func StartBot() {
 				returnMsg := fmt.Sprintf("Sorry <@%s>, %s :(", userId, err.Error())
 				rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
 			}
-			commandHandler(userId, chanId, cmdSplit[1], rtm)
+			commandHandler(userId, chanId, cmdSplit[1], rtm, api)
 
 		case *slack.PresenceChangeEvent:
 			log.Debugf("Presence Change: %v\n", ev)
@@ -70,7 +72,7 @@ func StartBot() {
 
 }
 
-func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM) {
+func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM, api *slack.Client) {
 	returnMsg := ""
 	cmdSplit, err := msgSplit(Bigger, 0, msg, " ")
 	if err != nil {
@@ -86,15 +88,47 @@ func commandHandler(userId string, chanId string, msg string, rtm *slack.RTM) {
 		rtm.SendMessage(rtm.NewOutgoingMessage(returnMsg, chanId))
 		break
 
+	case ShowConfig:
+		key := reflect.TypeOf(MyConfig)
+		value := reflect.ValueOf(MyConfig)
+		rtnStr := fmt.Sprintf("<@%s> Current Config\n", userId)
+		for i := 0; i < value.NumField(); i++ {
+			rtnStr = rtnStr + fmt.Sprintf("%s - %s \n", key.Field(i).Name, value.Field(i))
+		}
+		rtm.SendMessage(rtm.NewOutgoingMessage(rtnStr, chanId))
+		break
+
 	case CrawlNow:
+		//var rtnStr string
+		//api := slack.New(MyConfig.SlackBotToken, slack.OptionDebug(true))
+
+		var attachment slack.Attachment
 		dbSess := crawler.DbSession{}
 		dbSess.Connect(&MyConfig)
 		crwl := crawler.Control{}
 		crwl.Links = MyConfig.RbList
-		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Started Crawler...", userId), chanId))
 		crwl.Start(&MyConfig)
-		dbSess.Commit(crwl.Result)
-		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Crawler finished :)", userId), chanId))
+		newEntries := dbSess.Commit(crwl.Result)
+		rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Crawler finished successfully in %s with %d new entries!", userId, crwl.EndTime.Sub(crwl.StartTime), len(newEntries)), chanId))
+
+		for _, entry := range newEntries {
+			preText := fmt.Sprintf("New Rating for %s!", entry.Location)
+			text := fmt.Sprintf("Timestamp: %s\nUser: %s\nRating: %s\nComment: %s", entry.Time.Format("2006-01-02"), entry.User, entry.Rating, entry.Comment)
+			attachment = slack.Attachment{
+				Title:      entry.Location,
+				Pretext:    preText,
+				Text:       text,
+				TitleLink:  entry.Link,
+				MarkdownIn: []string{"text", "pretext"},
+			}
+			channelID, timestamp, err := api.PostMessage(chanId, slack.MsgOptionText(fmt.Sprintf("<@%s>", userId), false), slack.MsgOptionAttachments(attachment))
+			if err != nil {
+				log.Errorf("%s\n", err)
+				return
+			}
+			log.Debugf("Message successfully sent to channel %s at %s", channelID, timestamp)
+		}
+		break
 
 	}
 
