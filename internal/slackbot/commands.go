@@ -7,6 +7,7 @@ import (
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"reflect"
+	"strings"
 )
 
 type Param struct {
@@ -25,11 +26,20 @@ type Command struct {
 func (c *Command) validateParams(msg []string) []*Param {
 	paramList := []*Param{}
 
-	for _, param := range msg {
-		paramStruct, ok := c.ParamMap[param]
+	for _, paramString := range msg {
+		paramStruct, ok := c.ParamMap[paramString]
 		if !ok {
-			log.Debugf("Param %s does not exist.", param)
+			log.Debugf("Param %s does not exist.", paramString)
 			break
+		}
+		if strings.Contains(paramString, "::") {
+			// param structure is paramName::paramValue
+			paramSlice, err := msgSplitAndValidate(Equal, 2, paramString, "::")
+			if err != nil {
+				log.Errorln("Error while splitting msg: ", err)
+				continue
+			}
+			paramStruct.Value = paramSlice[1]
 		}
 
 		// just giving pointer is much faster. doesnt matter much for small slices though
