@@ -30,6 +30,7 @@ func (c *Command) validateParams(msg []string) []*Param {
 		paramStruct, ok := c.ParamMap[paramString]
 		if !ok {
 			log.Debugf("Param %s does not exist.", paramString)
+			// send msg that param will be ignored
 			break
 		}
 		if strings.Contains(paramString, "::") {
