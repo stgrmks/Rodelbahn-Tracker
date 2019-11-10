@@ -20,7 +20,8 @@ type Param struct {
 type Command struct {
 	Name        string
 	Description string
-	ParamMap    map[string]Param
+	ParamMap    map[string]*Param
+	Active      bool
 }
 
 func (c *Command) validateParams(msg []string) []*Param {
@@ -34,7 +35,7 @@ func (c *Command) validateParams(msg []string) []*Param {
 			break
 		}
 		if strings.Contains(paramString, "::") {
-			// param structure is paramName::paramValue
+			// param structure can be paramName::paramValue
 			paramSlice, err := msgSplitAndValidate(Equal, 2, paramString, "::")
 			if err != nil {
 				log.Errorln("Error while splitting msg: ", err)
@@ -44,13 +45,13 @@ func (c *Command) validateParams(msg []string) []*Param {
 		}
 
 		// just giving pointer is much faster. doesnt matter much for small slices though
-		paramList = append(paramList, &paramStruct)
+		paramList = append(paramList, paramStruct)
 	}
 	return paramList
 }
 
-func (c *Command) execute(command Command, ps []*Param, user string, channel string, b *Bot) {
-	switch command.Name {
+func (c *Command) execute(ps []*Param, user string, channel string, b *Bot) {
+	switch c.Name {
 	case "version":
 		sendVersionBuildMsg(user, channel, b)
 		break
@@ -64,32 +65,73 @@ func (c *Command) execute(command Command, ps []*Param, user string, channel str
 		break
 
 	case "periodicCrawl":
+		c.Active = true
 		startPeriodicCrawler(user, channel, ps, b)
 		break
 
+	case "stopPeriodicCrawl":
+		b.StopPeriodicCrawl <- true
+		break
+
+	case "shutdown":
+		b.Shutdown <- true
+		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Going to sleep. Bye!", user), channel))
+		break
+
+	case "help":
+		sendHelpMsg(user, channel, b)
+		break
 	}
+
 }
 
-func startPeriodicCrawler(user string, channel string, ps []*Param, b *Bot) {
+func sendHelpMsg(user string, channel string, b *Bot) {
+	msg := fmt.Sprintf("<@%s> Available Commands: \n", user)
+	for _, cmd := range b.CommandMap {
+		log.Infoln(cmd.Name)
+		msg += fmt.Sprintf("%s: %s", cmd.Name, cmd.Description)
+		if cmd.ParamMap != nil {
+			msg += "Params: "
+			for _, param := range cmd.ParamMap {
+				msg += fmt.Sprintf("%s", param.Name)
+			}
+		}
+		msg += "\n"
+	}
+	b.rtm.SendMessage(b.rtm.NewOutgoingMessage(msg, channel))
+}
+
+func startPeriodicCrawler(user, channel string, ps []*Param, b *Bot) {
+
+	// TODO: broken
 	// cron setup
-	c := cron.New()
-	err := c.AddFunc(b.MyConfig.Cron, func() {
+	cr := cron.New()
+	err := cr.AddFunc(b.MyConfig.Cron, func() {
 		startCrawler(user, channel, []*Param{}, b)
 	})
 	if err != nil {
 		log.Errorln("Failed to add Crawl function to cron service", err)
 		return
 	}
-	c.Start()
+	cr.Start()
 	log.Debug("Started cron service.")
-	b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Starting Periodic Crawl with Cron: %s", user, b.MyConfig.Cron), channel))
+	b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Starting periodic crawl with cron-pattern: %s", user, b.MyConfig.Cron), channel))
 
-	// waiting for kill signal
-	<-b.StopPeriodicCrawl
-	logger.Logger.Info("Stopping Periodical Crawl.")
+	go stopPeriodicCrawlListener(user, channel, cr, b)
 }
 
-func startCrawler(user string, channel string, ps []*Param, b *Bot) {
+func stopPeriodicCrawlListener(user, channel string, cr *cron.Cron, b *Bot) {
+	// TODO: move this as parameter into periodicCrawl
+	// waiting for kill signal
+	for {
+		<-b.StopPeriodicCrawl
+		cr.Stop()
+		logger.Logger.Info("Stopped periodical crawl.")
+		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Stopped periodic crawl.", user), channel))
+	}
+}
+
+func startCrawler(user, channel string, ps []*Param, b *Bot) {
 	silent := false
 	for _, p := range ps {
 		if p.Name == "silent" {

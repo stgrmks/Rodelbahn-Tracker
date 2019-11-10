@@ -23,29 +23,51 @@ func init() {
 		Optional: true,
 		Flag:     true,
 	}
-	var commands = []slackbot.Command{
+	var commands = []*slackbot.Command{
 		{
 			Name:        "version",
 			Description: "Show version and build number",
 			ParamMap:    nil,
+			Active:      false,
 		},
 		{
 			Name:        "crawlNow",
 			Description: "Start the Rodelbahn crawl",
-			ParamMap:    map[string]slackbot.Param{crawlParams.Name: crawlParams},
+			ParamMap:    map[string]*slackbot.Param{crawlParams.Name: &crawlParams},
+			Active:      false,
 		},
 		{
 			Name:        "showConfig",
 			Description: "Show current config",
 			ParamMap:    nil,
+			Active:      false,
 		},
 		{
 			Name:        "periodicCrawl",
 			Description: "Start periodic crawls",
 			ParamMap:    nil,
+			Active:      false,
+		},
+		{
+			Name:        "stopPeriodicCrawl",
+			Description: "Stop periodic crawls",
+			ParamMap:    nil,
+			Active:      false,
+		},
+		{
+			Name:        "shutdown",
+			Description: "Shutdown bot",
+			ParamMap:    nil,
+			Active:      false,
+		},
+		{
+			Name:        "help",
+			Description: "Shows help menu",
+			ParamMap:    nil,
+			Active:      false,
 		},
 	}
-	var commandMap = make(map[string]slackbot.Command)
+	var commandMap = make(map[string]*slackbot.Command)
 	for _, command := range commands {
 		commandMap[command.Name] = command
 	}

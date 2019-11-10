@@ -11,5 +11,5 @@
       ],
   "slackBotToken": "your secret token",
   "notify": true,
-  "cron": "0 0 * * * *"
+  "cron": "0 * * * * *"
 }

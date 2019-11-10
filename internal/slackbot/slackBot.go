@@ -13,7 +13,7 @@ type Bot struct {
 	Shutdown          chan bool
 	StopPeriodicCrawl chan bool
 	MyConfig          config.Config
-	CommandMap        map[string]Command
+	CommandMap        map[string]*Command
 	api               *slack.Client
 	rtm               *slack.RTM
 }
@@ -84,5 +84,5 @@ func (b *Bot) invokeCommand(user string, channel string, msg string) {
 	if len(msgSlice) > 2 {
 		userParams = cmd.validateParams(msgSlice[2:])
 	}
-	cmd.execute(cmd, userParams, user, channel, b)
+	cmd.execute(userParams, user, channel, b)
 }
