@@ -70,6 +70,11 @@ func (c *Command) execute(ps []*Param, user string, channel string, b *Bot) {
 		break
 
 	case "stopPeriodicCrawl":
+		if !b.CommandMap["periodicCrawl"].Active {
+			b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Periodic crawl is not activated!", user), channel))
+			break
+		}
+		b.CommandMap["periodicCrawl"].Active = false
 		b.StopPeriodicCrawl <- true
 		break
 
@@ -103,7 +108,6 @@ func sendHelpMsg(user string, channel string, b *Bot) {
 
 func startPeriodicCrawler(user, channel string, ps []*Param, b *Bot) {
 
-	// TODO: broken
 	// cron setup
 	cr := cron.New()
 	err := cr.AddFunc(b.MyConfig.Cron, func() {
