@@ -1,0 +1,17 @@
+[Unit]
+Description=Rodelbahn-Tracker Service on %i
+ConditionPathExists=/home/pi/Rodelbahn-Tracker/Rodelbahn-Tracker
+
+[Service]
+
+Restart=on-failure
+RestartSec=10
+startLimitIntervalSec=60
+
+WorkingDirectory=/home/pi/Rodelbahn-Tracker
+ExecStart=/home/pi/Rodelbahn-Tracker/Rodelbahn-Tracker %i
+
+PermissionsStartOnly=true
+
+[Install]
+WantedBy=multi-user.target
