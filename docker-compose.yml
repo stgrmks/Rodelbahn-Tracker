@@ -34,7 +34,7 @@ services:
       - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
 
     networks:
-      - mongonet
+      - rb-tracker__network
 
 volumes:
   mongodb:
