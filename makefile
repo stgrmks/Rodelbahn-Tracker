@@ -14,7 +14,7 @@ run: build
 	docker exec -it $(CNT) mongo admin --eval "db.createUser({user: 'admin', pwd: 'admin', roles:[{role:'root',db:'admin'}]});"
 	sleep 10
 	@echo "Admin user generated..."
-	docker exec -it $(CNT) mongo rb-tracker --authenticationDatabase admin -u admin -p admin --eval "db.getSiblingDB('rb-tracker');db.createUser({user: 'msteger', pwd: 'msteger', roles:[{role:'dbOwner',db:'rb-tracker'}]});"
+	docker exec -it $(CNT) mongo rb-tracker --authenticationDatabase admin -u admin -p admin --eval "db.getSiblingDB('rb-tracker');db.createUser({user: 'user', pwd: 'user', roles:[{role:'dbOwner',db:'rb-tracker'}]});"
 	@echo "DB and DB-User setup!"
 	docker-compose up -d
 	@echo "Dockerized Environment started (as daemon)."
