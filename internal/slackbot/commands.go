@@ -83,6 +83,10 @@ func (c *Command) execute(ps []*Param, user string, channel string, b *Bot) {
 		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Going to sleep. Bye!", user), channel))
 		break
 
+	case "lastEntries":
+		getLastEntries(user, channel, ps, b)
+		break
+
 	case "help":
 		sendHelpMsg(user, channel, b)
 		break
@@ -159,6 +163,35 @@ func startCrawler(user, channel string, ps []*Param, b *Bot) {
 			}
 			log.Debugf("Message successfully sent to channel %s at %s", channelID, timestamp)
 		}
+	}
+}
+
+func getLastEntries(user string, channel string, ps []*Param, b *Bot) {
+	var result []crawler.RbData
+	var msg string
+	dbSess := crawler.DbSession{}
+	dbSess.Connect(&b.MyConfig)
+
+	err := dbSess.Collection.Find(nil).Limit(5).All(&result)
+	if err != nil {
+		log.Fatal("Could not retrieve the last entries!")
+		msg = fmt.Sprintf("<@%s> Could not retrieve the last entries :(", user)
+		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(msg, channel))
+	}
+
+	if len(result) > 0 {
+		var attachment slack.Attachment
+		for _, r := range result {
+			attachment = createAttachement(r, attachment)
+			channelID, timestamp, err := b.api.PostMessage(channel, slack.MsgOptionText(fmt.Sprintf("<@%s>", user), false), slack.MsgOptionAttachments(attachment))
+			if err != nil {
+				log.Errorf("%s\n", err)
+			}
+			log.Debugf("Message successfully sent to channel %s at %s", channelID, timestamp)
+		}
+	} else {
+		msg = fmt.Sprintf("<@%s> No entries :(", user)
+		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(msg, channel))
 	}
 }
 

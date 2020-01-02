@@ -66,6 +66,12 @@ func init() {
 			ParamMap:    nil,
 			Active:      false,
 		},
+		{
+			Name:        "lastEntries",
+			Description: "Shows help menu",
+			ParamMap:    nil,
+			Active:      false,
+		},
 	}
 	var commandMap = make(map[string]*slackbot.Command)
 	for _, command := range commands {
