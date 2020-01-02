@@ -2,23 +2,31 @@ version: '3.6'
 
 services:
   mongo:
-    image: ind3x/rpi-mongo-express
-    container_name: rb-tracker__mongo-express
-    ports:
-      - 8081:8081
+    image: nonoroazoro/rpi-mongo
+    container_name: rb-tracker__mongodb
     environment:
-      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
-      - ME_CONFIG_MONGODB_SERVER=192.168.178.50
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-      - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
-      - ME_CONFIG_MONGODB_AUTH_USERNAME=user
-      - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
-
+      - MONGO_INITDB_DATABASE=rb-tracker
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    restart: always
+    volumes:
+      - ./mongo/entrypoint:/docker-entrypoint-initdb.d
+      - mongodb:/data/db
+      - mongoconfigdb:/data/configdb
+    ports:
+      - 27017:27017
     networks:
-      - mongonet
+      - rb-tracker__network
+    command: mongod --port 27017
+
+volumes:
+  mongodb:
+  mongoconfigdb:
 
 networks:
-  mongonet:
+  rb-tracker__network:
     driver: bridge
     name: rb-tracker__network
+
+
+
