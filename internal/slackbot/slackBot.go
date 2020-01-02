@@ -68,10 +68,11 @@ func (b *Bot) StartBot() {
 }
 
 func (b *Bot) invokeCommand(user string, channel string, msg string) {
-	userParams := []*Param{}
+	var userParams []*Param
 	msgSlice, err := msgSplitAndValidate(BiggerEqual, 2, msg, " ")
 	if err != nil {
 		log.Errorln("Error while splitting msg: ", err)
+		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Could not understand the command :(", user), channel))
 		return
 	}
 	cmdString := msgSlice[1]
@@ -79,7 +80,7 @@ func (b *Bot) invokeCommand(user string, channel string, msg string) {
 	if !ok {
 		log.Errorf("Command %s does not exist.", cmdString)
 		b.rtm.SendMessage(b.rtm.NewOutgoingMessage(fmt.Sprintf("<@%s> Command %s does not exist!", user, cmdString), channel))
-
+		return
 	}
 	if len(msgSlice) > 2 {
 		userParams = cmd.validateParams(msgSlice[2:])
