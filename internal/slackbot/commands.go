@@ -6,6 +6,7 @@ import (
 	"github.com/robfig/cron"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
+	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"strings"
 )
@@ -25,27 +26,36 @@ type Command struct {
 }
 
 func (c *Command) validateParams(msg []string) []*Param {
-	paramList := []*Param{}
+	var paramList []*Param
+	var paramStruct *Param
+	var ok bool
 
 	for _, paramString := range msg {
-		paramStruct, ok := c.ParamMap[paramString]
-		if !ok {
-			log.Debugf("Param %s does not exist.", paramString)
-			// send msg that param will be ignored
-			break
-		}
+
 		if strings.Contains(paramString, "::") {
-			// param structure can be paramName::paramValue
+			// we assume format param::value
 			paramSlice, err := msgSplitAndValidate(Equal, 2, paramString, "::")
 			if err != nil {
 				log.Errorln("Error while splitting msg: ", err)
 				continue
 			}
+			paramStruct, ok = c.ParamMap[paramSlice[0]]
+			if !ok {
+				log.Debug("Param %s does not exist.", paramString)
+				continue
+			}
 			paramStruct.Value = paramSlice[1]
-		}
+			paramList = append(paramList, paramStruct)
 
-		// just giving pointer is much faster. doesnt matter much for small slices though
-		paramList = append(paramList, paramStruct)
+		} else {
+			//	we assume format value which should be flag only
+			paramStruct, ok := c.ParamMap[paramString]
+			if !ok {
+				log.Debug("Param %s does not exist.", paramString)
+				continue
+			}
+			paramList = append(paramList, paramStruct)
+		}
 	}
 	return paramList
 }
@@ -172,7 +182,14 @@ func getLastEntries(user string, channel string, ps []*Param, b *Bot) {
 	dbSess := crawler.DbSession{}
 	dbSess.Connect(&b.MyConfig)
 
-	err := dbSess.Collection.Find(nil).Limit(5).All(&result)
+	var query bson.M = nil
+	for _, p := range ps {
+		if p.Name == "location" {
+			query = bson.M{"location": p.Value}
+		}
+	}
+
+	err := dbSess.Collection.Find(query).Limit(3).All(&result)
 	if err != nil {
 		log.Fatal("Could not retrieve the last entries!")
 		msg = fmt.Sprintf("<@%s> Could not retrieve the last entries :(", user)

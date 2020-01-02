@@ -23,6 +23,12 @@ func init() {
 		Optional: true,
 		Flag:     true,
 	}
+	var lastEntriesParams = slackbot.Param{
+		Name:     "location",
+		Value:    "",
+		Optional: true,
+		Flag:     false,
+	}
 	var commands = []*slackbot.Command{
 		{
 			Name:        "version",
@@ -68,8 +74,8 @@ func init() {
 		},
 		{
 			Name:        "lastEntries",
-			Description: "Shows help menu",
-			ParamMap:    nil,
+			Description: "Get last entries",
+			ParamMap:    map[string]*slackbot.Param{lastEntriesParams.Name: &lastEntriesParams},
 			Active:      false,
 		},
 	}
