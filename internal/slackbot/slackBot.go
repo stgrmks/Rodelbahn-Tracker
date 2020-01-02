@@ -30,7 +30,7 @@ func (b *Bot) StartBot() {
 		case *slack.ConnectedEvent:
 			log.Debugln("Infos:", ev.Info)
 			log.Debugln("Connection counter:", ev.ConnectionCount)
-			b.rtm.SendMessage(b.rtm.NewOutgoingMessage("Hello world", "C2147483705"))
+			b.rtm.SendMessage(b.rtm.NewOutgoingMessage("Hello world", "CFVJPFU2K"))
 
 		case *slack.MessageEvent:
 			bot := b.rtm.GetInfo().User.ID
