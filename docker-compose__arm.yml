@@ -12,7 +12,6 @@ services:
       rb-tracker__network:
     depends_on:
       - mongo
-      - mongo-express
 
   mongo:
     image: andresvidal/rpi3-mongodb3
