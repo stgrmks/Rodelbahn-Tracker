@@ -12,6 +12,7 @@ services:
       rb-tracker__network:
     depends_on:
       - mongo
+      - mongo-express
 
   mongo:
     image: andresvidal/rpi3-mongodb3
@@ -42,9 +43,10 @@ services:
       - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
       - ME_CONFIG_MONGODB_AUTH_USERNAME=user
       - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
-
     networks:
       - rb-tracker__network
+    depends_on:
+      - mongo
 
 networks:
   rb-tracker__network:
