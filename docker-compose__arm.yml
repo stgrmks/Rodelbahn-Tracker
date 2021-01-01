@@ -1,0 +1,52 @@
+version: '3.6'
+
+services:
+  app:
+    container_name: rb-tracker__app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      RBT_SlackBotToken: ${RBT_SlackBotToken}
+    networks:
+      rb-tracker__network:
+    depends_on:
+      - mongo
+
+  mongo:
+    image: andresvidal/rpi3-mongodb3
+    container_name: rb-tracker__mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=rb-tracker
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    restart: always
+    volumes:
+      - ./mongo/entrypoint:/docker-entrypoint-initdb.d
+    ports:
+      - 27017:27017
+    networks:
+      - rb-tracker__network
+    command: mongod --port 27017
+
+  mongo-express:
+    image: ind3x/rpi-mongo-express
+    container_name: rb-tracker__mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      - ME_CONFIG_MONGODB_SERVER=192.168.178.25
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=user
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
+
+    networks:
+      - rb-tracker__network
+
+networks:
+  rb-tracker__network:
+    driver: bridge
+    name: rb-tracker__network
