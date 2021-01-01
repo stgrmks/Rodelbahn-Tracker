@@ -14,7 +14,7 @@ services:
 #      - mongo
 
   mongo:
-    image: andresvidal/rpi3-mongodb3
+    image: nonoroazoro/rpi-mongo
     container_name: rb-tracker__mongodb
     environment:
       - MONGO_INITDB_DATABASE=rb-tracker
