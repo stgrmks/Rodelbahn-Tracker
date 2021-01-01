@@ -6,9 +6,7 @@
   "collection": "rb-tracker",
   "baseURL": "https://www.rodelfuehrer.de",
   "extURL": "/rodelbahnen-alpen",
-  "rbList": [
-    "https://www.rodelfuehrer.de/rodelbahnen-alpen/rodeltour/1-berchtesgadener-land-schoenau-kuehroint"
-      ],
+  "rbList": [],
   "slackBotToken": "your secret token",
   "notify": true,
   "cron": "0 * * * * *"
