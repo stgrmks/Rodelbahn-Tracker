@@ -2,7 +2,7 @@ package slackbot
 
 import (
 	"fmt"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/config"
 	"strings"
 )

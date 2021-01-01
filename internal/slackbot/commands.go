@@ -2,8 +2,8 @@ package slackbot
 
 import (
 	"fmt"
-	"github.com/nlopes/slack"
 	"github.com/robfig/cron"
+	"github.com/slack-go/slack"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"gopkg.in/mgo.v2/bson"

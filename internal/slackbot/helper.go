@@ -3,7 +3,7 @@ package slackbot
 import (
 	"errors"
 	"fmt"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/crawler"
 	"github.com/stgrmks/Rodelbahn-Tracker/internal/logger"
 	"strings"
