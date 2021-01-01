@@ -1,5 +1,5 @@
 {
-  "host": "192.168.178.25",
+  "host": "mongo",
   "database": "rb-tracker",
   "user": "user",
   "password": "user",

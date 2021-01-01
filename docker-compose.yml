@@ -1,6 +1,18 @@
 version: '3.6'
 
 services:
+  app:
+    container_name: rb-tracker__app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      RBT_SlackBotToken: ${RBT_SlackBotToken}
+    networks:
+      rb-tracker__network:
+    depends_on:
+      - mongo
+
   mongo:
     image: mongo:latest
     container_name: rb-tracker__mongodb
