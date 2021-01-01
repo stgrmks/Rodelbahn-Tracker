@@ -1,17 +1,17 @@
 version: '3.6'
 
 services:
-#  app:
-#    container_name: rb-tracker__app
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    environment:
-#      RBT_SlackBotToken: ${RBT_SlackBotToken}
-#    networks:
-#      rb-tracker__network:
-#    depends_on:
-#      - mongo
+  app:
+    container_name: rb-tracker__app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      RBT_SlackBotToken: ${RBT_SlackBotToken}
+    networks:
+      rb-tracker__network:
+    depends_on:
+      - mongo
 
   mongo:
     image: mongo:bionic
@@ -30,7 +30,7 @@ services:
     command: mongod --port 27017
 
   mongo-express:
-    image: ind3x/rpi-mongo-express
+    image: mongo-express
     container_name: rb-tracker__mongo-express
     ports:
       - 8081:8081
