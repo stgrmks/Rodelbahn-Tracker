@@ -14,7 +14,7 @@ services:
 #      - mongo
 
   mongo:
-    image: nonoroazoro/rpi-mongo
+    image: mongo:bionic
     container_name: rb-tracker__mongodb
     environment:
       - MONGO_INITDB_DATABASE=rb-tracker
@@ -29,23 +29,23 @@ services:
       - rb-tracker__network
     command: mongod --port 27017
 
-#  mongo-express:
-#    image: ind3x/rpi-mongo-express
-#    container_name: rb-tracker__mongo-express
-#    ports:
-#      - 8081:8081
-#    environment:
-#      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
-#      - ME_CONFIG_MONGODB_SERVER=mongo
-#      - ME_CONFIG_MONGODB_PORT=27017
-#      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-#      - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
-#      - ME_CONFIG_MONGODB_AUTH_USERNAME=user
-#      - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
-#    networks:
-#      - rb-tracker__network
-#    depends_on:
-#      - mongo
+  mongo-express:
+    image: ind3x/rpi-mongo-express
+    container_name: rb-tracker__mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=rb-tracker
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=user
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=user
+    networks:
+      - rb-tracker__network
+    depends_on:
+      - mongo
 
 networks:
   rb-tracker__network:
